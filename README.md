@@ -1,233 +1,188 @@
-# Passenger Experience KPI Scorecard (Streamlit Dashboard)
+# Passenger Experience KPI Scorecard (Streamlit)
 
-Live Demo: https://barata90-passenger-experience-dashboard-1-app-rlcqgz.streamlit.app/
-
-Repo: https://github.com/barata90/passenger-experience-dashboard_1
-
-A portfolio-ready dashboard for **Passenger Experience analytics** (KPI scorecard + touchpoint deep-dive + model-driven opportunity prioritization) using the Airline Passenger Satisfaction dataset.
-
-This project is designed to demonstrate skills aligned with **Senior Data Specialist | Product Development & Design**:
-- KPI design & monitoring
-- Touchpoint performance analysis (soft product + digital journey)
-- Driver modeling and explainability (permutation importance)
-- Translating insights into **prioritized product opportunities** + estimated KPI lift (what-if simulation)
+Interactive dashboard for **Passenger Experience analytics** (KPI scorecard, touchpoint deep-dive, model-driven opportunity prioritization, and segment drilldowns). Built as a portfolio case for **Product Development & Design / Customer Experience analytics** roles.
 
 ---
 
-## 1) Project Structure
+## Live Demo
+- **Streamlit App:** https://barata90-passenger-experience-dashboard-1-app-rlcqgz.streamlit.app/ 
+- **Repository:** https://github.com/barata90/passenger-experience-dashboard_1
 
-Place these files in the **same project folder**:
+---
+
+## Preview
+> Update the image path below to the screenshot you want to feature.
+
+![Dashboard Preview](assets/dashboard.png)
+
+---
+
+## Executive Summary (Leadership-ready)
+This dashboard translates passenger survey and operational data into a clear product narrative:
+
+- **Baseline KPI:** Satisfaction rate is ~44% (test set in the original notebook work), indicating meaningful upside for experience improvement.
+- **Strong experience linkage:** A composite **Experience Index** (mean of all touchpoint ratings) separates satisfied vs not satisfied passengers clearly.
+- **Top opportunities (impact × headroom):** **Inflight Wi‑Fi**, **Online boarding**, and **Check‑in service** emerge as the highest-leverage initiatives from modeling + prioritization.
+
+### Estimated KPI uplift (what-if simulation)
+Scenario used for prioritization (not causal): increase a touchpoint rating by **+1** for passengers scoring **≤ 3** (capped at 5), and measure average predicted satisfaction change.
+
+Example estimates from the notebook exports:
+- **Inflight Wi‑Fi:** **+1.44 pp**
+- **Online boarding:** **+1.00 pp**
+- **Check‑in service:** **+0.26 pp**
+
+> These are **scenario estimates** intended for prioritization and stakeholder communication.
+
+---
+
+## What the dashboard includes
+
+### Pages / Tabs
+- **Executive View**
+  - KPI cards (Satisfaction Rate, Experience Index, passenger count)
+  - “Opportunity Map” (performance vs impact) for touchpoints
+  - Top opportunities table and what‑if lift (if `outputs/` is present)
+  - Download filtered data as CSV (portfolio-friendly)
+- **Experience Deep Dive**
+  - Bottom touchpoints by average score (pain points)
+  - Top touchpoints by satisfaction gap (differentiators)
+  - Segment KPIs (Class / Type of Travel / Customer Type)
+- **Model & Opportunities**
+  - Driver ranking via permutation importance (AUC drop)
+  - Opportunity table (importance × headroom)
+  - Top‑3 what‑if impact simulation table
+- **Segment Drilldown (Multi-page)**
+  - Dedicated page to compare **Business vs Personal travel** patterns and touchpoint gaps
+
+---
+
+## Key definitions (used in charts & tables)
+
+- **Satisfaction Rate**
+  - Percentage of passengers labeled **satisfied**.
+- **Touchpoint Average Score**
+  - Mean rating (0–5) for each experience touchpoint.
+- **Satisfaction Gap**
+  - `avg(touchpoint | satisfied) − avg(touchpoint | not satisfied)`  
+  - Higher gap = stronger differentiator for satisfaction.
+- **Experience Index**
+  - Mean of all touchpoint ratings for each passenger (0–5 scale).
+- **Permutation Importance (Driver Strength)**
+  - Measures the drop in model AUC when a feature is shuffled.  
+  - Higher AUC drop = feature is more predictive.
+- **Opportunity Score (Prioritization)**
+  - `opportunity_score = importance_mean × score_headroom`
+  - `score_headroom = 5 − avg_score_all`
+  - Prioritizes touchpoints that are **high impact** and **underperforming**.
+- **What‑if Impact Simulation**
+  - A transparent scenario: improve low scores (≤3) by +1 and estimate satisfaction lift.  
+  - Useful for communicating “expected direction and magnitude” to stakeholders.
+
+---
+
+## Project structure
 
 ```
-Case Study 1 — Passenger Experience KPI Scorecard (Product Dev oriented)/
+.
 ├─ app.py
-├─ train.csv                      (optional for dashboard; used by notebook)
-├─ test.csv                       (required for dashboard)
-└─ outputs/                       (recommended; created by notebook export)
-   ├─ kpi_summary.csv
-   ├─ touchpoint_scores.csv
-   ├─ segment_kpi_class.csv
-   ├─ segment_kpi_type_of_travel.csv
-   ├─ segment_kpi_customer_type.csv
-   ├─ segment_kpi_gender.csv
-   ├─ permutation_importance_all_features.csv
-   ├─ touchpoint_opportunity_table.csv
-   └─ top3_opportunity_impact_simulation.csv
+├─ pages/
+│  └─ 1_Drilldown_Segments.py
+├─ outputs/                         # exported tables (recommended)
+├─ assets/                          # screenshots
+├─ requirements.txt
+├─ test.csv                         # required
+├─ initiatives.csv                  # optional (initiative tracking)
+└─ README.md
 ```
 
-> The dashboard can run with **only `test.csv`**.  
-> To unlock the **Model & Opportunities** tab fully, generate the files under `outputs/` from the notebook.
+### Required
+- `app.py`
+- `test.csv`
+- `requirements.txt`
+
+### Recommended
+- `outputs/` (generated by the notebook export) to unlock model-based tables and lift estimates:
+  - `permutation_importance_all_features.csv`
+  - `touchpoint_opportunity_table.csv`
+  - `top3_opportunity_impact_simulation.csv`
+  - `touchpoint_scores.csv`, `segment_kpi_*.csv`, etc.
 
 ---
 
-## 2) Setup (Conda on macOS)
+## Run locally (Conda, macOS)
 
-### 2.1 Create & activate environment
 ```bash
 conda create -n qa-dashboard python=3.11 -y
 conda activate qa-dashboard
-```
-
-### 2.2 Install dependencies
-```bash
 conda install -c conda-forge pandas numpy matplotlib plotly scikit-learn streamlit -y
+streamlit run app.py
 ```
 
-Optional (only needed if you want to re-run the modeling notebook in the same env):
+Optional (only if you want to re-run the modeling notebook in the same environment):
 ```bash
 conda install -c conda-forge xgboost shap -y
 ```
 
 ---
 
-## 3) Run the Dashboard
+## Deployment (Streamlit Community Cloud)
+1. Push the repo to GitHub.
+2. Go to Streamlit Community Cloud → **New app**
+3. Select:
+   - **Repo:** this repository
+   - **Branch:** `main`
+   - **Main file:** `app.py`
+4. Deploy and add the live URL to the **Live Demo** section above.
 
-From the project folder:
-```bash
-cd "/Users/user/Desktop/Case Study 1 — Passenger Experience KPI Scorecard (Product Dev oriented)"
-streamlit run app.py
+Tip: If you need to force a Python version, add `runtime.txt`:
+```
+python-3.11
 ```
 
-Streamlit will open the app in your browser (or show a local URL in the terminal).
+---
+
+## Notes on data & cleaning
+The app performs lightweight, transparent preprocessing:
+- Drops an index-like column (`Unnamed: 0`) if present
+- Standardizes categorical labels (`Customer Type`, `Type of Travel`)
+- Median-imputes missing `Arrival Delay in Minutes`
+- Creates `is_satisfied` and `experience_index` for KPI reporting
 
 ---
 
-## 4) Data Expectations
+## How to interpret the Opportunity Map (Executive View)
+The Opportunity Map plots each touchpoint by:
+- **Performance** (Avg score) on the X-axis
+- **Impact** (Satisfaction gap) on the Y-axis
 
-### 4.1 Required file
-- `test.csv` must exist in the project root (same folder as `app.py`).
-
-### 4.2 Columns used
-The dashboard expects at least these columns in `test.csv`:
-- `satisfaction` (target label: `satisfied` vs `neutral or dissatisfied`)
-- Segments: `Class`, `Type of Travel`, `Customer Type` (and optionally `Gender`)
-- Touchpoint ratings (0–5), e.g.:
-  - `Inflight wifi service`, `Online boarding`, `Checkin service`, `Seat comfort`, `Cleanliness`, etc.
-
-### 4.3 Cleaning performed by the app
-The app automatically:
-- Drops `Unnamed: 0` (if present)
-- Standardizes `Customer Type` and `Type of Travel` text formatting
-- Imputes missing `Arrival Delay in Minutes` using the median
-- Creates:
-  - `is_satisfied` (1 if satisfied, else 0)
-  - `experience_index` (mean of all touchpoint ratings per passenger)
+Use the quadrants to prioritize:
+- **Low performance + high impact:** highest priority initiatives
+- **High performance + high impact:** protect strengths
+- **Low performance + low impact:** investigate (may be low leverage)
+- **High performance + low impact:** lower priority
 
 ---
 
-## 5) How to Use the Dashboard
-
-### Sidebar filters
-You can filter the analysis by:
-- **Class**
-- **Type of Travel**
-- **Customer Type**
-
-All KPIs and charts update instantly based on selected filters.
+## Limitations (important for credibility)
+- This analysis is **not causal**: model explainability and what‑if lifts reflect association, not guaranteed outcomes.
+- Touchpoint ratings are self-reported and can be closely tied to satisfaction labels (inflating predictive performance).
+- Treat uplift numbers as **directional** until validated through controlled pilots or experiments.
 
 ---
 
-## 6) Dashboard Tabs & Interpretation
-
-### A) Executive View (Leadership-ready)
-Purpose: provide a single-page story for decision-makers.
-
-**KPI Cards**
-- **Satisfaction Rate**: % satisfied in the filtered subset (delta vs overall shown in pp)
-- **Avg Experience Index**: composite KPI on a 0–5 scale (delta vs overall)
-- **Passengers (Filtered)**: sample size under current filters
-- **Wi‑Fi ≤ 3 (Coverage)**: % of passengers with low Wi‑Fi rating (scope of improvement)
-
-**Interpretation**
-- If Satisfaction Rate improves in a segment (e.g., Business Class), it indicates **segment-based expectations/experience differences**.
-- Experience Index is a useful **top-line product KPI**; it aligns strongly with satisfaction.
-
-**Opportunity Map (Performance vs Impact)**
-- X-axis: **Avg touchpoint score** (performance)
-- Y-axis: **Satisfaction gap** = avg(satisfied) − avg(not satisfied) (impact proxy)
-
-Quadrants:
-- **Low score + high gap** → highest priority improvements  
-- **High score + high gap** → protect strengths  
-- **Low score + low gap** → investigate (may be low impact)  
-- **High score + low gap** → lower priority  
-
-**Model-based opportunities (if `outputs/` exists)**
-- Ranked initiatives using `opportunity_score = importance × headroom`
-- Top 3 includes a simple what-if lift estimate (percentage points)
+## Portfolio talking points (interview-ready)
+1. Defined product KPIs (Satisfaction Rate + Experience Index) and built a leadership scorecard.
+2. Identified pain points and differentiators through touchpoint average + satisfaction gap analysis.
+3. Built an explainable driver model (permutation importance) to prioritize initiatives.
+4. Converted insights into an opportunity table (impact × headroom) and simple what‑if lift estimates.
+5. Delivered an interactive dashboard with segment drilldowns and an initiative tracking foundation.
 
 ---
 
-### B) Experience Deep Dive (Analyst view)
-Purpose: identify pain points and what differentiates satisfied vs not satisfied passengers.
-
-**Bottom Touchpoints by Avg Score**
-- Highlights lowest-performing experience areas.
-
-**Top Touchpoints by Satisfaction Gap**
-- Highlights touchpoints most associated with satisfaction differences.
-
-**Segment KPIs**
-- Satisfaction rate by **Class**, **Type of Travel**, and **Customer Type**.
-
----
-
-### C) Model & Opportunities (Decision support)
-Purpose: show explainability and prioritization using notebook outputs.
-
-**Top Drivers (Permutation Importance)**
-Permutation importance measures the **drop in AUC** when a feature is shuffled.
-- Higher AUC drop = stronger driver.
-
-**Opportunities Table**
-- `score_headroom = 5 − avg_score_all`
-- `opportunity_score = importance_mean × score_headroom`
-
-**Top 3 What-if Impact Simulation**
-Scenario:
-- For each top touchpoint, increase rating by +1 **only for passengers with score ≤ 3** (cap at 5)
-- Compare predicted satisfaction before vs after → **lift_pp (percentage points)**
-
-> This is a **scenario estimate**, not a causal claim.
-
----
-
-## 7) How to Regenerate the `outputs/` Tables
-
-Run the notebook export step to generate:
-- `permutation_importance_all_features.csv`
-- `touchpoint_opportunity_table.csv`
-- `top3_opportunity_impact_simulation.csv`
-(and other KPI summary tables)
-
-If these are missing, the dashboard will still run but will show info messages in the Model tab.
-
----
-
-## 8) Portfolio Talking Points (Suggested Narrative)
-
-Use this structure in interviews:
-1) **Baseline KPI**: satisfaction rate ~44% (dataset-level)
-2) **Experience Index**: satisfied passengers have a materially higher composite experience score
-3) **Drivers**: Wi‑Fi + digital journey + travel context show strong influence in the model
-4) **Opportunities**: prioritize by driver importance × performance headroom
-5) **Quantified scenario**: what-if simulation suggests largest lift from Wi‑Fi and digital journey improvements
-6) **Action plan**: define KPIs and validate via experiments (A/B tests / phased rollouts)
-
----
-
-## 9) Known Limitations & Best Practices
-
-- **Not causal**: model explanations and what-if simulations are associative, not causal.
-- **Touchpoint ratings are self-reported** and can be closely related to satisfaction (inflating model performance).
-- If `id` appears as important in modeling, consider dropping it for cleaner interpretation.
-- Present results as:
-  - “drivers in this dataset”
-  - “scenario estimates”
-  - “next steps: validate via experimentation”
-
----
-
-## 10) Troubleshooting
-
-**`test.csv not found`**
-- Ensure `test.csv` is in the same folder as `app.py`.
-
-**`outputs/*.csv not found`**
-- Run notebook export, or confirm `outputs/` exists and contains the CSVs.
-
-**Streamlit won’t start**
-```bash
-conda activate qa-dashboard
-python -c "import streamlit; print('streamlit ok')"
-```
-
-**No data after filtering**
-- Filters may remove all rows. Click **Reset filters** or widen selections.
-
----
-
-## 11) Optional Enhancements
-- Add drill-down views by segment (Business vs Personal travel)
-- Add KPI targets (before/after) and initiative tracking
-- Deploy to Streamlit Community Cloud for a shareable portfolio link
+## Author
+Add your name and links here:
+- **Name:** Your Name
+- **LinkedIn:** https://www.linkedin.com/in/your-profile
+- **Email:** your.email@example.com
+- **Portfolio:** https://your-portfolio.com
