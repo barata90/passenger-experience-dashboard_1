@@ -13,7 +13,7 @@ Interactive dashboard for **Passenger Experience analytics** (KPI scorecard, tou
 ## Preview
 
 Below are dashboard screenshots (Executive View + drilldowns).  
-If you’re viewing this on GitHub, you can click an image to open it in full resolution.
+If we’re viewing this on GitHub, we can click an image to open it in full resolution.
 
 ![Dashboard preview — Executive View](assets/Screen%20Shot%202026-01-18%20at%2011.03.27.png)
 
@@ -126,13 +126,11 @@ Example estimates from the notebook exports:
 ## Run locally (Conda, macOS)
 
 ```bash
-conda create -n qa-dashboard python=3.11 -y
-conda activate qa-dashboard
 conda install -c conda-forge pandas numpy matplotlib plotly scikit-learn streamlit -y
 streamlit run app.py
 ```
 
-Optional (only if you want to re-run the modeling notebook in the same environment):
+Optional (only if we want to re-run the modeling notebook in the same environment):
 ```bash
 conda install -c conda-forge xgboost shap -y
 ```
@@ -148,9 +146,9 @@ conda install -c conda-forge xgboost shap -y
    - **Main file:** `app.py`
 4. Deploy and add the live URL to the **Live Demo** section above.
 
-Tip: If you need to force a Python version, add `runtime.txt`:
+Tip: If we need to force a Python version, add `runtime.txt`:
 ```
-python-3.11
+python-3.12
 ```
 
 ---
@@ -231,8 +229,8 @@ Use the quadrants to prioritize:
 ---
 
 ## Author
-Add your name and links here:
+Add wer name and links here:
 - **Name:** Amrin B
-- **LinkedIn:** [https://www.linkedin.com/in/your-profile](https://www.linkedin.com/in/barata-a-81b051b6/)
+- **LinkedIn:** [https://www.linkedin.com/in/wer-profile](https://www.linkedin.com/in/barata-a-81b051b6/)
 - **Email:** baratalade@gmail.com
 - **Portfolio:** -
