@@ -34,6 +34,27 @@ st.markdown(
 BASE = Path(".")
 OUTPUTS = BASE / "outputs"
 
+
+# -----------------------------
+# Helpers
+# -----------------------------
+def compute_touchpoints(d: pd.DataFrame, rating_cols: list[str]) -> pd.DataFrame:
+    """Compute avg score and satisfaction gap per touchpoint for a given dataframe."""
+    rows = []
+    for c in rating_cols:
+        avg_all = d[c].mean()
+        avg_sat = d.loc[d["is_satisfied"] == 1, c].mean()
+        avg_not = d.loc[d["is_satisfied"] == 0, c].mean()
+        rows.append(
+            {
+                "touchpoint": c,
+                "avg_score_all": float(avg_all),
+                "gap_sat_minus_not": float(avg_sat - avg_not),
+            }
+        )
+    return pd.DataFrame(rows)
+
+
 # -----------------------------
 # Data loading
 # -----------------------------
@@ -60,6 +81,10 @@ def load_data():
         )
 
     # target flag
+    if "satisfaction" not in df.columns:
+        st.error("Column 'satisfaction' not found in test.csv.")
+        st.stop()
+
     df["is_satisfied"] = (
         df["satisfaction"].astype(str).str.lower().str.strip() == "satisfied"
     ).astype(int)
@@ -75,10 +100,15 @@ def load_data():
     }
     rating_cols = [c for c in numeric_cols if c not in RATING_EXCLUDE]
 
+    if len(rating_cols) == 0:
+        st.error("No numeric touchpoint columns found. Please check your dataset schema.")
+        st.stop()
+
     # experience index
     df["experience_index"] = df[rating_cols].mean(axis=1)
 
     return df, rating_cols
+
 
 @st.cache_data
 def load_outputs():
@@ -90,6 +120,7 @@ def load_outputs():
     opp_df  = pd.read_csv(opp_path)  if opp_path.exists()  else None
     imp_df  = pd.read_csv(imp_path)  if imp_path.exists()  else None
     return perm_df, opp_df, imp_df
+
 
 df, rating_cols = load_data()
 perm_df, opp_df, imp_df = load_outputs()
@@ -106,18 +137,16 @@ st.caption("Product Development & Design Analytics • KPI Scorecard • Driver 
 st.sidebar.header("Filters")
 st.sidebar.caption("Filters apply to KPIs and all visuals below.")
 
-# Reset button
 if st.sidebar.button("Reset filters"):
     st.rerun()
 
-# Filter defaults
 all_class = sorted(df["Class"].dropna().unique().tolist()) if "Class" in df.columns else []
 all_tot   = sorted(df["Type of Travel"].dropna().unique().tolist()) if "Type of Travel" in df.columns else []
 all_cty   = sorted(df["Customer Type"].dropna().unique().tolist()) if "Customer Type" in df.columns else []
 
-cls = st.sidebar.multiselect("Class", all_class, default=all_class)
-tot = st.sidebar.multiselect("Type of Travel", all_tot, default=all_tot)
-cty = st.sidebar.multiselect("Customer Type", all_cty, default=all_cty)
+cls = st.sidebar.multiselect("Class", all_class, default=all_class) if all_class else []
+tot = st.sidebar.multiselect("Type of Travel", all_tot, default=all_tot) if all_tot else []
+cty = st.sidebar.multiselect("Customer Type", all_cty, default=all_cty) if all_cty else []
 
 # Filtered dataframe
 f = df.copy()
@@ -128,7 +157,6 @@ if "Type of Travel" in f.columns and tot:
 if "Customer Type" in f.columns and cty:
     f = f[f["Customer Type"].isin(cty)]
 
-# Guard for empty filter results
 if len(f) == 0:
     st.warning("No data matches the selected filters. Please adjust filters in the sidebar.")
     st.stop()
@@ -151,32 +179,29 @@ if "Inflight wifi service" in f.columns:
     wifi_low_share = (f["Inflight wifi service"] <= 3).mean() * 100
 
 # -----------------------------
-# Tabs layout (WOW factor)
+# Tabs layout
 # -----------------------------
-tab1, tab2, tab3 = st.tabs(["Executive View", "Experience Deep Dive", "Model & Opportunities"])
+tab1, tab2, tab3, tab4 = st.tabs(
+    ["Executive View", "Experience Deep Dive", "Model & Opportunities", "Initiative Tracker"]
+)
 
 # =========================================================
 # TAB 1 — Executive View
 # =========================================================
 with tab1:
-    # KPI row
     k1, k2, k3, k4 = st.columns(4)
     k1.metric("Satisfaction Rate", f"{sat_rate:.2f}%", f"{delta_sat:+.2f} pp vs overall")
     k2.metric("Avg Experience Index", f"{exp_idx:.3f}", f"{delta_exp:+.3f} vs overall")
     k3.metric("Passengers (Filtered)", f"{n_rows:,}")
-    if wifi_low_share is not None:
-        k4.metric("Wi-Fi ≤ 3 (Coverage)", f"{wifi_low_share:.2f}%")
-    else:
-        k4.metric("Wi-Fi ≤ 3 (Coverage)", "N/A")
+    k4.metric("Wi-Fi ≤ 3 (Coverage)", f"{wifi_low_share:.2f}%" if wifi_low_share is not None else "N/A")
 
-    # Executive summary callouts
     st.markdown(
         f"""
         <div class="insight-box">
         <b>Executive Summary</b><br>
         • Satisfaction is <b>{sat_rate:.2f}%</b> under current filters (<b>{delta_sat:+.2f} pp</b> vs overall).<br>
         • Average Experience Index is <b>{exp_idx:.3f}</b> on a 0–5 scale (<b>{delta_exp:+.3f}</b> vs overall).<br>
-        • Based on modeling, the highest-leverage initiatives are <b>Inflight Wi-Fi</b>, <b>Online Boarding</b>, and <b>Check-in Service</b>.
+        • Priority levers (based on model + opportunity ranking): <b>Inflight Wi-Fi</b>, <b>Online Boarding</b>, <b>Check-in Service</b>.
         </div>
         """,
         unsafe_allow_html=True
@@ -184,20 +209,8 @@ with tab1:
 
     st.divider()
 
-    # Build touchpoint table for this filtered view (for opportunity map + bottom touchpoints)
-    tp = []
-    for c in rating_cols:
-        avg_all = f[c].mean()
-        avg_sat = f.loc[f["is_satisfied"] == 1, c].mean()
-        avg_not = f.loc[f["is_satisfied"] == 0, c].mean()
-        tp.append({
-            "touchpoint": c,
-            "avg_score_all": avg_all,
-            "gap_sat_minus_not": avg_sat - avg_not
-        })
-    tp_df = pd.DataFrame(tp)
+    tp_df = compute_touchpoints(f, rating_cols)
 
-    # WOW chart: Opportunity map (performance vs impact)
     fig = px.scatter(
         tp_df,
         x="avg_score_all",
@@ -209,7 +222,6 @@ with tab1:
             "gap_sat_minus_not": "Satisfaction gap (impact proxy)"
         }
     )
-    # quadrant reference lines (medians)
     fig.add_vline(x=float(tp_df["avg_score_all"].median()))
     fig.add_hline(y=float(tp_df["gap_sat_minus_not"].median()))
     fig.update_layout(height=460, margin=dict(l=20, r=20, t=60, b=20), title_x=0.02)
@@ -217,14 +229,12 @@ with tab1:
 
     st.divider()
 
-    # Top 3 opportunities table (from notebook outputs), if available
     st.subheader("Top Product Opportunities (Model-based)")
     left, right = st.columns([1.2, 0.8])
 
     with left:
         if opp_df is not None:
-            show_opp = opp_df.head(10).copy()
-            st.dataframe(show_opp, use_container_width=True)
+            st.dataframe(opp_df.head(10), use_container_width=True)
         else:
             st.info("touchpoint_opportunity_table.csv not found in outputs/. Run the notebook export to enable this table.")
 
@@ -235,7 +245,6 @@ with tab1:
         else:
             st.info("top3_opportunity_impact_simulation.csv not found in outputs/. Run the notebook export to enable lift estimates.")
 
-    # Download button (portfolio-ready)
     st.download_button(
         "Download filtered data (CSV)",
         data=f.to_csv(index=False).encode("utf-8"),
@@ -248,19 +257,7 @@ with tab1:
 # =========================================================
 with tab2:
     st.subheader("Touchpoint Performance (Average + Satisfaction Gap)")
-
-    # recompute tp_df (kept local for clarity)
-    tp = []
-    for c in rating_cols:
-        avg_all = f[c].mean()
-        avg_sat = f.loc[f["is_satisfied"] == 1, c].mean()
-        avg_not = f.loc[f["is_satisfied"] == 0, c].mean()
-        tp.append({
-            "touchpoint": c,
-            "avg_score_all": avg_all,
-            "gap_sat_minus_not": avg_sat - avg_not
-        })
-    tp_df = pd.DataFrame(tp)
+    tp_df = compute_touchpoints(f, rating_cols)
 
     c1, c2 = st.columns(2)
     with c1:
@@ -307,6 +304,8 @@ with tab2:
             )
             fig.update_layout(height=360, margin=dict(l=20, r=20, t=60, b=20), title_x=0.02)
             st.plotly_chart(fig, use_container_width=True)
+        else:
+            st.info("Class column not found.")
 
     with seg2:
         if "Type of Travel" in f.columns:
@@ -321,6 +320,8 @@ with tab2:
             )
             fig.update_layout(height=360, margin=dict(l=20, r=20, t=60, b=20), title_x=0.02)
             st.plotly_chart(fig, use_container_width=True)
+        else:
+            st.info("Type of Travel column not found.")
 
     with seg3:
         if "Customer Type" in f.columns:
@@ -335,9 +336,11 @@ with tab2:
             )
             fig.update_layout(height=360, margin=dict(l=20, r=20, t=60, b=20), title_x=0.02)
             st.plotly_chart(fig, use_container_width=True)
+        else:
+            st.info("Customer Type column not found.")
 
 # =========================================================
-# TAB 3 — Model & Opportunities
+# TAB 3 — Model & Opportunities (includes SHAP image)
 # =========================================================
 with tab3:
     st.subheader("Drivers & Product Opportunities")
@@ -358,15 +361,14 @@ with tab3:
             )
             fig.update_layout(height=520, margin=dict(l=20, r=20, t=60, b=20), title_x=0.02)
             st.plotly_chart(fig, use_container_width=True)
-            st.caption("Higher value = larger performance drop when the feature is shuffled → stronger driver.")
+            st.caption("Higher value = larger AUC drop when the feature is shuffled → stronger driver.")
         else:
             st.info("permutation_importance_all_features.csv not found in outputs/. Run the notebook export to enable this chart.")
 
     with colB:
         st.markdown("**Opportunities (Touchpoints)**")
         if opp_df is not None:
-            show = opp_df.head(10).copy()
-            st.dataframe(show, use_container_width=True)
+            st.dataframe(opp_df.head(10), use_container_width=True)
             st.caption("Opportunity score = driver importance × score headroom (5 − avg touchpoint score).")
         else:
             st.info("touchpoint_opportunity_table.csv not found in outputs/. Run the notebook export to enable this table.")
@@ -379,28 +381,46 @@ with tab3:
 
     st.divider()
 
-    # Extra: show raw tables for debugging (collapsible)
+    # ✅ SHAP summary plot (static PNG generated from notebook)
+    with st.expander("SHAP Summary (Global Drivers)", expanded=True):
+        shap_img = OUTPUTS / "shap_beeswarm_top20.png"
+        if shap_img.exists():
+            st.image(
+                str(shap_img),
+                caption="SHAP beeswarm (top 20): points to the right increase satisfaction probability; to the left decrease it.",
+                use_container_width=True
+            )
+        else:
+            st.info("SHAP plot not found. Generate outputs/shap_beeswarm_top20.png from the notebook export step.")
+
+    # Debug preview
     with st.expander("Show raw data preview (debug)"):
         st.dataframe(f.head(25), use_container_width=True)
         st.caption("Preview of filtered records (first 25 rows).")
 
-st.subheader("Initiative Tracker (Targets & Status)")
+# =========================================================
+# TAB 4 — Initiative Tracker
+# =========================================================
+with tab4:
+    st.subheader("Initiative Tracker (Targets & Status)")
+    st.caption("Optional: maintain a lightweight initiative register (targets, owners, status) in initiatives.csv.")
 
-init_path = BASE / "initiatives.csv"
-if init_path.exists():
-    init_df = pd.read_csv(init_path)
-    st.dataframe(init_df, use_container_width=True)
+    init_path = BASE / "initiatives.csv"
+    if init_path.exists():
+        init_df = pd.read_csv(init_path)
+        st.dataframe(init_df, use_container_width=True)
 
-    # Simple KPI target progress (visual)
-    fig = px.bar(
-        init_df,
-        x="initiative",
-        y="target_pp",
-        title="Target KPI Lift (pp) by Initiative",
-        labels={"target_pp":"Target lift (pp)", "initiative":""}
-    )
-    fig.update_layout(height=420, xaxis_tickangle=-15)
-    st.plotly_chart(fig, use_container_width=True)
-else:
-    st.info("Create initiatives.csv in the project folder to enable initiative tracking.")
-
+        if "target_pp" in init_df.columns and "initiative" in init_df.columns:
+            fig = px.bar(
+                init_df,
+                x="initiative",
+                y="target_pp",
+                title="Target KPI Lift (pp) by Initiative",
+                labels={"target_pp": "Target lift (pp)", "initiative": ""}
+            )
+            fig.update_layout(height=420, xaxis_tickangle=-15, margin=dict(l=20, r=20, t=60, b=20), title_x=0.02)
+            st.plotly_chart(fig, use_container_width=True)
+        else:
+            st.info("initiatives.csv found, but expected columns like 'initiative' and 'target_pp' are missing.")
+    else:
+        st.info("Create initiatives.csv in the project folder to enable initiative tracking.")
