@@ -1,0 +1,4 @@
+touchpoint,eligible_share_%,base_pred_satisfaction_%,new_pred_satisfaction_%,lift_pp
+Inflight wifi service,69.71,43.88,45.32,1.44
+Online boarding,49.9,43.88,44.88,1.0
+Checkin service,51.72,43.88,44.14,0.26
