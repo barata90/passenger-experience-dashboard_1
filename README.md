@@ -1,6 +1,7 @@
 # Passenger Experience KPI Scorecard (Streamlit Dashboard)
 
-Live Demo: https://barata90-passenger-experience-dashboard-1-app-rlcqgz.streamlit.app/ 
+Live Demo: https://barata90-passenger-experience-dashboard-1-app-rlcqgz.streamlit.app/
+
 Repo: https://github.com/barata90/passenger-experience-dashboard_1
 
 A portfolio-ready dashboard for **Passenger Experience analytics** (KPI scorecard + touchpoint deep-dive + model-driven opportunity prioritization) using the Airline Passenger Satisfaction dataset.
