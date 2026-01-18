@@ -11,9 +11,22 @@ Interactive dashboard for **Passenger Experience analytics** (KPI scorecard, tou
 ---
 
 ## Preview
-> Update the image path below to the screenshot you want to feature.
 
-![Dashboard Preview](assets/dashboard.png)
+Below are dashboard screenshots (Executive View + drilldowns).  
+If you’re viewing this on GitHub, you can click an image to open it in full resolution.
+
+![Dashboard preview — Executive View](assets/Screen%20Shot%202026-01-18%20at%2011.03.27.png)
+
+**More screenshots**
+- Executive View (KPI cards + Opportunity Map):  
+  ![](assets/Screen%20Shot%202026-01-18%20at%2011.03.21.png)
+- Experience Deep Dive (touchpoints + segment KPIs):  
+  ![](assets/Screen%20Shot%202026-01-18%20at%2011.03.13.png)
+- Model & Opportunities (drivers + opportunity ranking):  
+  ![](assets/Screen%20Shot%202026-01-18%20at%2011.03.06.png)
+- Segment Drilldown (Business vs Personal travel):  
+  ![](assets/Screen%20Shot%202026-01-18%20at%2011.02.55.png)
+
 
 ---
 
@@ -171,18 +184,55 @@ Use the quadrants to prioritize:
 
 ---
 
-## Portfolio talking points (interview-ready)
-1. Defined product KPIs (Satisfaction Rate + Experience Index) and built a leadership scorecard.
-2. Identified pain points and differentiators through touchpoint average + satisfaction gap analysis.
-3. Built an explainable driver model (permutation importance) to prioritize initiatives.
-4. Converted insights into an opportunity table (impact × headroom) and simple what‑if lift estimates.
-5. Delivered an interactive dashboard with segment drilldowns and an initiative tracking foundation.
+## Portfolio talking points
+
+1. **Defined product KPIs and built a leadership scorecard**
+   - Defined two headline KPIs for product decision-making: **Satisfaction Rate** and an **Experience Index** (average of all touchpoint ratings).
+   - Established a clear baseline: **43.90% satisfaction (test)** and **43.33% (train)** to support consistent reporting.
+   - Packaged the KPIs into an **Executive View** designed for fast, leadership-level consumption.
+
+2. **Isolated what’s underperforming vs what truly differentiates satisfaction**
+   - Identified the lowest-rated experience areas (pain points): **Inflight Wi-Fi (2.72)**, **Ease of Online Booking (2.76)**, **Gate Location (2.98)**.
+   - Identified the strongest differentiators between satisfied vs not satisfied passengers using the **satisfaction gap** metric:
+     - **Online Boarding (+1.35)**, **Inflight Entertainment (+1.08)**, **Seat Comfort (+0.92)**.
+   - Added segment context to guide product focus:
+     - **Class:** Business **69.52%** vs Eco **19.39%**
+     - **Type of Travel:** Business Travel **58.82%** vs Personal Travel **9.99%**
+     - **Customer Type:** Loyal **48.14%** vs Disloyal **25.17%**
+
+3. **Built an explainable driver model to support prioritization**
+   - Trained a high-performing model and used **permutation importance (AUC drop)** to explain which factors matter most—an approach that is easy to communicate to non-technical stakeholders.
+   - Key drivers included:
+     - **Inflight Wi-Fi** (importance_mean **0.120**) — strongest touchpoint driver
+     - Context drivers: **Type of Travel (0.079)** and **Customer Type (0.020)**
+     - Digital/ground journey levers: **Online Boarding (0.0066)** and **Check-in Service (0.0036)**
+
+4. **Translated analytics into a ranked opportunity list with quantified impact**
+   - Created an **Opportunity Score** that combines *impact* and *headroom*:  
+     `opportunity_score = importance × (5 − average score)`
+   - Top priorities:
+     1) **Inflight Wi-Fi** (opportunity_score **0.274**)  
+     2) **Online Boarding** (**0.0115**)  
+     3) **Check-in Service** (**0.0060**)  
+   - Estimated KPI movement using a transparent “what-if” simulation (improving low scores ≤3 by +1, capped at 5):
+     - **Inflight Wi-Fi:** **+1.44 pp** (eligible population **69.71%**)  
+     - **Online Boarding:** **+1.00 pp** (eligible population **49.90%**)  
+     - **Check-in Service:** **+0.26 pp** (eligible population **51.72%**)  
+   - Positioned these as **directional estimates for prioritization**, to be validated via pilots/A/B tests.
+
+5. **Delivered a stakeholder-ready dashboard with drilldowns and execution tracking**
+   - Built an interactive Streamlit dashboard with:
+     - **Executive View** (KPI cards + Opportunity Map)
+     - **Experience Deep Dive** (touchpoint performance + segment KPIs)
+     - **Model & Opportunities** (drivers + opportunity ranking + lift scenarios)
+     - **Segment drilldown page** (Business vs Personal travel)
+   - Included an **initiative-tracking foundation** (targets/status via `initiatives.csv`) and a **CSV export** feature to support reporting workflows and stakeholder sharing.
 
 ---
 
 ## Author
 Add your name and links here:
-- **Name:** Your Name
-- **LinkedIn:** https://www.linkedin.com/in/your-profile
-- **Email:** your.email@example.com
-- **Portfolio:** https://your-portfolio.com
+- **Name:** Amrin B
+- **LinkedIn:** [https://www.linkedin.com/in/your-profile](https://www.linkedin.com/in/barata-a-81b051b6/)
+- **Email:** baratalade@gmail.com
+- **Portfolio:** -
